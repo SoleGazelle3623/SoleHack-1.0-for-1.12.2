@@ -1,0 +1,16 @@
+[
+{
+  "modid": "solehack",
+  "name": "SoleHack",
+  "description": "The Best Hack for the Best Player.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "https://solehack.yourwebsitespace.com/",
+  "updateUrl": "",
+  "authorList": ["SoleGazelle3623"],
+  "credits": "The Best Player, and Beta Testers",
+  "logoFile": "assets/solehack/logo.png",
+  "screenshots": [],
+  "dependencies": []
+}
+]

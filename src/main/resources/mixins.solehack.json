@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.7.11",
+  "package": "com.yourwebsitespace.solehack.mixin",
+  "refmap": "mixins.solehack.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "mixins.MixinMinecraft",
+    "mixins.MixinNetHandlerPlayClient",
+    "client.MixinNetHandlerPlayClient",
+    "client.MixinEntity",
+    "client.MixinEntityPlayerSP",
+    "client.MixinEntityRenderer",
+    "client.MixinPlayerControllerMP"
+  ],
+  "client": [],
+  "server": []
+}
