@@ -41,6 +41,13 @@ public class CrystalAura extends Module {
     public boolean protocol13 = true;
     public boolean silentSwitch = true;
 
+    // Delay configurations (in milliseconds)
+    public int placeDelay = 0;
+    public int breakDelay = 0;
+
+    private long lastPlaceTime = 0;
+    private long lastBreakTime = 0;
+
     private BlockPos renderPos = null;
 
     public CrystalAura() {
@@ -91,6 +98,10 @@ public class CrystalAura extends Module {
     }
 
     private boolean breakCrystals(EntityPlayer target) {
+        if (System.currentTimeMillis() - lastBreakTime < breakDelay) {
+            return false;
+        }
+
         List<EntityEnderCrystal> crystals = mc.world.loadedEntityList.stream()
                 .filter(EntityEnderCrystal.class::isInstance)
                 .map(EntityEnderCrystal.class::cast)
@@ -111,10 +122,16 @@ public class CrystalAura extends Module {
 
         mc.player.connection.sendPacket(new CPacketUseEntity(crystal));
         mc.player.swingArm(EnumHand.MAIN_HAND);
+
+        lastBreakTime = System.currentTimeMillis();
         return true;
     }
 
     private void placeCrystal(EntityPlayer target) {
+        if (System.currentTimeMillis() - lastPlaceTime < placeDelay) {
+            return;
+        }
+
         int crystalSlot = findCrystalSlot();
         if (crystalSlot == -1) {
             renderPos = null;
@@ -172,6 +189,8 @@ public class CrystalAura extends Module {
             if (silentSwitch && crystalSlot != oldSlot) {
                 mc.player.connection.sendPacket(new CPacketHeldItemChange(oldSlot));
             }
+
+            lastPlaceTime = System.currentTimeMillis();
         } else {
             renderPos = null;
         }
@@ -255,7 +274,7 @@ public class CrystalAura extends Module {
         GlStateManager.enableTexture2D();
         GlStateManager.enableDepth();
         GlStateManager.disableBlend();
-        GlStateManager.popMatrix();
+        GlStateManager.popMatrix(); // FIXED
     }
 
     @Override

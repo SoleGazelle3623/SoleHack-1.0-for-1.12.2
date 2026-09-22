@@ -17,6 +17,8 @@ public class CrystalAuraConfigScreen extends GuiScreen {
     private static final int BUTTON_DONE = 999;
     private static final int SLIDER_RANGE = 0;
     private static final int SLIDER_WALLS_RANGE = 1;
+    private static final int SLIDER_PLACE_DELAY = 5;
+    private static final int SLIDER_BREAK_DELAY = 6;
     private static final int TOGGLE_ROTATIONS = 2;
     private static final int TOGGLE_PROTOCOL13 = 3;
     private static final int TOGGLE_SILENT = 4;
@@ -29,19 +31,21 @@ public class CrystalAuraConfigScreen extends GuiScreen {
     public void initGui() {
         this.buttonList.clear();
         int centerX = this.width / 2;
-        int startY = 40;
+        int startY = 30;
 
         CrystalAura module = CrystalAura.INSTANCE;
         if (module == null) return;
 
-        // Custom Sliders for Ranges
+        // Custom Sliders for Ranges and Delays
         this.buttonList.add(new GuiSlider(SLIDER_RANGE, centerX - 100, startY, "Range: ", 1.0f, 6.0f, (float) module.range));
         this.buttonList.add(new GuiSlider(SLIDER_WALLS_RANGE, centerX - 100, startY + 24, "Walls Range: ", 1.0f, 6.0f, (float) module.wallsRange));
+        this.buttonList.add(new GuiSlider(SLIDER_PLACE_DELAY, centerX - 100, startY + 48, "Place Delay (ms): ", 0.0f, 1000.0f, module.placeDelay));
+        this.buttonList.add(new GuiSlider(SLIDER_BREAK_DELAY, centerX - 100, startY + 72, "Break Delay (ms): ", 0.0f, 1000.0f, module.breakDelay));
 
-        // Toggle Buttons
-        this.buttonList.add(new GuiButton(TOGGLE_ROTATIONS, centerX - 100, startY + 58, 200, 20, "Strict Rotations: " + (module.strictRotations ? "ON" : "OFF")));
-        this.buttonList.add(new GuiButton(TOGGLE_PROTOCOL13, centerX - 100, startY + 82, 200, 20, "1.13 Placement (protocol13): " + (module.protocol13 ? "ON" : "OFF")));
-        this.buttonList.add(new GuiButton(TOGGLE_SILENT, centerX - 100, startY + 106, 200, 20, "Silent Switch: " + (module.silentSwitch ? "ON" : "OFF")));
+        // Toggle Buttons (Shifted down to accommodate new sliders)
+        this.buttonList.add(new GuiButton(TOGGLE_ROTATIONS, centerX - 100, startY + 106, 200, 20, "Strict Rotations: " + (module.strictRotations ? "ON" : "OFF")));
+        this.buttonList.add(new GuiButton(TOGGLE_PROTOCOL13, centerX - 100, startY + 130, 200, 20, "1.13 Placement (protocol13): " + (module.protocol13 ? "ON" : "OFF")));
+        this.buttonList.add(new GuiButton(TOGGLE_SILENT, centerX - 100, startY + 154, 200, 20, "Silent Switch: " + (module.silentSwitch ? "ON" : "OFF")));
 
         // Close Button
         this.buttonList.add(new GuiButton(BUTTON_DONE, centerX - 100, this.height - 35, 200, 20, "Done"));
@@ -92,6 +96,8 @@ public class CrystalAuraConfigScreen extends GuiScreen {
                 GuiSlider slider = (GuiSlider) button;
                 if (slider.id == SLIDER_RANGE) module.range = slider.getValue();
                 if (slider.id == SLIDER_WALLS_RANGE) module.wallsRange = slider.getValue();
+                if (slider.id == SLIDER_PLACE_DELAY) module.placeDelay = (int) slider.getValue();
+                if (slider.id == SLIDER_BREAK_DELAY) module.breakDelay = (int) slider.getValue();
             }
         }
     }
@@ -102,7 +108,7 @@ public class CrystalAuraConfigScreen extends GuiScreen {
         super.drawScreen(mouseX, mouseY, partialTicks);
 
         String title = (CrystalAura.INSTANCE != null) ? CrystalAura.INSTANCE.getName() + " Configuration" : "CrystalAura Configuration";
-        this.drawCenteredString(this.fontRenderer, title, this.width / 2, 15, 0xFFFFFF);
+        this.drawCenteredString(this.fontRenderer, title, this.width / 2, 12, 0xFFFFFF);
     }
 
     @Override
@@ -123,7 +129,13 @@ public class CrystalAuraConfigScreen extends GuiScreen {
             this.min = min;
             this.max = max;
             this.sliderValue = (current - min) / (max - min);
-            this.displayString = prefix + String.format("%.1f", getActualValue());
+
+            // Format whole numbers cleanly if min/max imply millisecond counts (integers)
+            if (max > 10.0f) {
+                this.displayString = prefix + (int) getActualValue();
+            } else {
+                this.displayString = prefix + String.format("%.1f", getActualValue());
+            }
         }
 
         public float getValue() {
@@ -145,7 +157,12 @@ public class CrystalAuraConfigScreen extends GuiScreen {
                 if (this.dragging) {
                     this.sliderValue = (float) (mouseX - (this.x + 4)) / (float) (this.width - 8);
                     this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0f, 1.0f);
-                    this.displayString = prefix + String.format("%.1f", getActualValue());
+
+                    if (max > 10.0f) {
+                        this.displayString = prefix + (int) getActualValue();
+                    } else {
+                        this.displayString = prefix + String.format("%.1f", getActualValue());
+                    }
                 }
 
                 mcInstance.getTextureManager().bindTexture(BUTTON_TEXTURES);
@@ -160,7 +177,13 @@ public class CrystalAuraConfigScreen extends GuiScreen {
             if (super.mousePressed(mcInstance, mouseX, mouseY)) {
                 this.sliderValue = (float) (mouseX - (this.x + 4)) / (float) (this.width - 8);
                 this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0f, 1.0f);
-                this.displayString = prefix + String.format("%.1f", getActualValue());
+
+                if (max > 10.0f) {
+                    this.displayString = prefix + (int) getActualValue();
+                } else {
+                    this.displayString = prefix + String.format("%.1f", getActualValue());
+                }
+
                 this.dragging = true;
                 return true;
             }
