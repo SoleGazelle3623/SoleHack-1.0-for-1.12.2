@@ -6,5 +6,6 @@ public enum Category {
     RENDER,
     MISC,
     EXPLOITS,
-    SEARCH
+    SEARCH,
+    ADDONS
 }

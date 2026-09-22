@@ -6,6 +6,7 @@ import com.yourwebsitespace.solehack.modules.misc.*;
 import com.yourwebsitespace.solehack.modules.movement.*;
 import com.yourwebsitespace.solehack.modules.render.*;
 import com.yourwebsitespace.solehack.util.ConfigManager;
+import com.yourwebsitespace.solehack.util.AddonLoader;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -20,7 +21,7 @@ public class MyMod {
 
     public static final String MODID = "solehack";
     public static final String NAME = "SoleHack";
-    public static final String VERSION = "0.1";
+    public static final String VERSION = "1.0";
     public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("SoleHack");
 
     @EventHandler
@@ -102,11 +103,14 @@ public class MyMod {
 
         new com.yourwebsitespace.solehack.command.CommandManager();
 
-        // 1. Load the config on startup
-        com.yourwebsitespace.solehack.util.ConfigManager.loadConfig();
+        // 1. Load the configuration on startup
+        ConfigManager.loadConfig("default");
 
-        // 2. Save the config automatically when the game closes
-        Runtime.getRuntime().addShutdownHook(new Thread(ConfigManager::saveConfig));
-    }
+        // 2. Load external addons from the .minecraft/SoleHack/addons/ folder
+        AddonLoader.loadAddons();
 
-}
+        // 3. Automatically save the configuration when the game shuts down
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ConfigManager.saveConfig("default");
+        }));
+    }}

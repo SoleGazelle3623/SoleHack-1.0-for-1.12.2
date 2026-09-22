@@ -1,13 +1,10 @@
 package com.yourwebsitespace.solehack.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.yourwebsitespace.solehack.Module;
 import com.yourwebsitespace.solehack.ModuleManager;
-import com.yourwebsitespace.solehack.MyMod;
-import net.minecraft.client.Minecraft;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.File;
 import java.io.FileReader;
@@ -16,66 +13,64 @@ import java.io.IOException;
 
 public class ConfigManager {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_DIR = new File(Minecraft.getMinecraft().gameDir, "SoleHack");
+    private static final File CONFIG_DIR = new File(net.minecraft.client.Minecraft.getMinecraft().gameDir, "SoleHack/configs");
 
-    public static void saveConfig() {
-        saveConfig("settings");
-    }
-
-    public static void loadConfig() {
-        loadConfig("settings");
-    }
-
-    public static void saveConfig(String configName) {
-        if (!CONFIG_DIR.exists() && !CONFIG_DIR.mkdirs()) {
-            return;
+    // Updated to accept a config name string
+    public static void saveConfig(String name) {
+        if (!CONFIG_DIR.exists()) {
+            boolean ignored = CONFIG_DIR.mkdirs();
         }
+        File configFile = new File(CONFIG_DIR, name + ".json");
 
-        File targetFile = new File(CONFIG_DIR, configName + ".json");
         JsonObject json = new JsonObject();
-        JsonObject modulesJson = new JsonObject();
+        JsonArray modulesArray = new JsonArray();
 
         for (Module module : ModuleManager.getModules()) {
             JsonObject modObj = new JsonObject();
+            modObj.addProperty("name", module.getName());
             modObj.addProperty("enabled", module.isEnabled());
             modObj.addProperty("key", module.getKey());
-            modulesJson.add(module.getName(), modObj);
-        }
-        json.add("Modules", modulesJson);
 
-        try (FileWriter writer = new FileWriter(targetFile)) {
-            GSON.toJson(json, writer);
+            modulesArray.add(modObj);
+        }
+
+        json.add("modules", modulesArray);
+
+        try (FileWriter writer = new FileWriter(configFile)) {
+            writer.write(json.toString());
         } catch (IOException e) {
-            MyMod.LOGGER.error("Failed to save configuration: {}", configName, e);
+            com.yourwebsitespace.solehack.MyMod.LOGGER.error("Failed to save config", e);
         }
     }
 
-    public static void loadConfig(String configName) {
-        File targetFile = new File(CONFIG_DIR, configName + ".json");
-        if (!targetFile.exists()) return;
+    // Updated to accept a config name string
+    public static void loadConfig(String name) {
+        File configFile = new File(CONFIG_DIR, name + ".json");
+        if (!configFile.exists()) return;
 
-        try (FileReader reader = new FileReader(targetFile)) {
+        try (FileReader reader = new FileReader(configFile)) {
             JsonObject json = new JsonParser().parse(reader).getAsJsonObject();
+            if (json.has("modules")) {
+                JsonArray modulesArray = json.getAsJsonArray("modules");
 
-            if (json.has("Modules")) {
-                JsonObject modulesJson = json.getAsJsonObject("Modules");
-                for (Module module : ModuleManager.getModules()) {
-                    if (modulesJson.has(module.getName())) {
-                        JsonObject modObj = modulesJson.getAsJsonObject(module.getName());
+                modulesArray.forEach(element -> {
+                    JsonObject modObj = element.getAsJsonObject();
+                    String modName = modObj.get("name").getAsString();
+                    boolean enabled = modObj.get("enabled").getAsBoolean();
+                    int key = modObj.has("key") ? modObj.get("key").getAsInt() : 0;
 
-                        if (modObj.has("enabled")) {
-                            module.setEnabled(modObj.get("enabled").getAsBoolean());
-                        }
-
-                        if (modObj.has("key")) {
-                            module.setKey(modObj.get("key").getAsInt());
+                    for (Module module : ModuleManager.getModules()) {
+                        if (module.getName().equalsIgnoreCase(modName)) {
+                            if (module.isEnabled() != enabled) {
+                                module.setEnabled(enabled);
+                            }
+                            module.setKey(key);
                         }
                     }
-                }
+                });
             }
         } catch (Exception e) {
-            MyMod.LOGGER.error("Failed to load configuration: {}", configName, e);
+            com.yourwebsitespace.solehack.MyMod.LOGGER.error("Failed to load config", e);
         }
     }
 }

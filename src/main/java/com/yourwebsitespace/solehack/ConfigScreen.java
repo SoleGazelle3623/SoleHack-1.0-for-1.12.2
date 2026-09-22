@@ -34,7 +34,9 @@ public class ConfigScreen extends GuiScreen {
 
     @Override
     public void initGui() {
+
         this.buttonList.clear();
+
 
         // Calculated horizontal margins to host all 5 category headers cleanly
         int tabWidth = 68;
